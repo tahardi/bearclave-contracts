@@ -1,4 +1,4 @@
-name: On PRs
+name: On Schedule
 
 on:
   workflow_dispatch:
@@ -46,3 +46,28 @@ jobs:
 
       - name: Run Forge Test
         run: forge test -vvv
+
+  test-integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [hello-world]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: Install Process Compose
+        run: |
+          sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b /usr/local/bin
+
+      - name: Run Integration Test - ${{ matrix.test }}
+        run: make test-integration-${{ matrix.test }}
