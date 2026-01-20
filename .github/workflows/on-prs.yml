@@ -36,11 +36,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Slither
+      - name: Run Slither
         uses: crytic/slither-action@v0.4.2
-
-      - name: Run Slither Analysis
-        run: slither ./contracts/src
+        with:
+          target: ./contracts/src
 
   sol-test:
     runs-on: ubuntu-latest
