@@ -1,6 +1,5 @@
 # Bearchain
 
-This repository was created as an avenue to explore different tools and purposes
-for interacting with blockchains. This includes smart contract development, 
-Golang bindings, and more. The hope is to tie this into the Bearclave project
-by making end-to-end Data Oracle and Off-Chain Compute examples.
+This repository was created to explore Ethereum-based blockchain development
+tools and applications. Eventually, the work here will tie into the Bearclave
+project through end-to-end Data Oracle and Off-Chain Compute examples.
