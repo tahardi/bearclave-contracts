@@ -1,0 +1,63 @@
+name: On PRs
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sol-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge Version
+        run: forge --version
+
+      - name: Run Forge Lint
+        run: forge lint
+
+  sol-sec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Slither
+        uses: crytic/slither-action@v0.4.2
+
+      - name: Run Slither Analysis
+        run: slither ./contracts/src
+
+  sol-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Run Forge Build
+        run: forge build --sizes
+
+      - name: Run Forge Test
+        run: forge test -vvv
