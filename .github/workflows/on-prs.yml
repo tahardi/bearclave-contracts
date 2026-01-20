@@ -1,0 +1,74 @@
+name: On PRs
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sol-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge Version
+        run: forge --version
+
+      - name: Run Forge Lint
+        run: forge lint
+
+  sol-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Run Forge Build
+        run: forge build --sizes
+
+      - name: Run Forge Test
+        run: forge test -vvv
+
+  test-integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [hello-world]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: Install Process Compose
+        run: |
+          sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b /usr/local/bin
+
+      - name: Run Integration Test - ${{ matrix.test }}
+        run: make test-integration-${{ matrix.test }}

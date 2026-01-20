@@ -1,0 +1,12 @@
+# See more config options
+# https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[profile.default]
+auto_detect_remappings = true
+broadcast = 'contracts/broadcast'
+cache_path = 'contracts/cache'
+libs = ['contracts/libs']
+out = 'contracts/out'
+remappings = ['forge-std/=contracts/libs/forge-std/src/']
+script = 'contracts/scripts'
+src = 'contracts/src'
+test = 'contracts/test'
