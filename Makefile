@@ -17,11 +17,9 @@ pre-pr: \
 	sol-test-unit \
 	test-integration
 
-# https://golangci-lint.run/welcome/install/#install-from-sources
-# They do not recommend using golangci-lint via go tool directive
-# as there are still bugs, but I want to try out go tool and work
-# uses an old version of golangci-lint. So, I don't mind guinea
-# pigging go tool and using a new version of golangci-lint in here
+################################################################################
+# Go Targets
+################################################################################
 lint_modfile=modfiles/golangci-lint/go.mod
 .PHONY: go-lint
 go-lint:
@@ -44,6 +42,9 @@ mock-version:
 tidy:
 	@go mod tidy
 
+################################################################################
+# Solidity Targets
+################################################################################
 .PHONY: sol-build
 sol-build:
 	@forge build
@@ -64,6 +65,13 @@ sol-sec:
 sol-test-unit: sol-build
 	@forge test -vvv
 
+################################################################################
+# Shared Targets
+################################################################################
+process_compose_port=8079
+process_compose_config=.process-compose.yaml
+integration_dir=./test/integration
+
 .PHONY: test-integration
 test-integration: \
 	test-integration-hello-world
@@ -72,8 +80,8 @@ test-integration: \
 test-integration-hello-world: sol-build tidy
 	@process-compose up \
 		--tui=false \
-		--port=8079 \
-		-f ./test/integration/hello-world/.process-compose.yaml \
+		--port=${process_compose_port} \
+		-f ${integration_dir}/hello-world/${process_compose_config} \
 		2> /dev/null
 
 .PHONY: clean
