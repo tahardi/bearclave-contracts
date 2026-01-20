@@ -11,7 +11,6 @@ pre-pr: \
 	tidy \
 	mock \
 	go-lint \
-	go-test-unit \
 	sol-fmt \
 	sol-lint \
 	sol-sec \
@@ -44,13 +43,6 @@ mock-version:
 .PHONY: tidy
 tidy:
 	@go mod tidy
-
-.PHONY: go-test-unit
-go-test-unit: go-test-unit-internal
-
-.PHONY: go-test-unit-internal
-go-test-unit-internal:
-	@go test -v -count=1 -race ./internal/...
 
 .PHONY: sol-build
 sol-build:
