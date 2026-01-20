@@ -7,7 +7,7 @@ SHELL := bash
 .SUFFIXES:
 
 .PHONY: pre-pr
-pre-pr: tidy sol-fmt sol-lint sol-test
+pre-pr: tidy sol-fmt sol-lint sol-sec sol-test
 
 # https://golangci-lint.run/welcome/install/#install-from-sources
 # They do not recommend using golangci-lint via go tool directive
@@ -36,6 +36,10 @@ mock-version:
 tidy:
 	@go mod tidy
 
+.PHONY: sol-build
+sol-build:
+	@forge build
+
 .PHONY: sol-fmt
 sol-fmt:
 	@forge fmt
@@ -44,12 +48,12 @@ sol-fmt:
 sol-lint:
 	@forge lint
 
-.PHONY: sol-build
-sol-build:
-	@forge build
+.PHONY: sol-sec
+sol-sec:
+	@slither ./contracts/src
 
 .PHONY: sol-test
-sol-test:
+sol-test: sol-build
 	@forge test -vvv
 
 .PHONY: clean
