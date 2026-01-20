@@ -1,4 +1,8 @@
 .idea/
-configs/
-*.db
+**/configs/
 **/bin
+**/cache
+**/out
+
+*.db
+*.env

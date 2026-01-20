@@ -7,7 +7,7 @@ SHELL := bash
 .SUFFIXES:
 
 .PHONY: pre-pr
-pre-pr: tidy
+pre-pr: tidy sol-fmt sol-lint sol-test
 
 # https://golangci-lint.run/welcome/install/#install-from-sources
 # They do not recommend using golangci-lint via go tool directive
@@ -15,16 +15,12 @@ pre-pr: tidy
 # uses an old version of golangci-lint. So, I don't mind guinea
 # pigging go tool and using a new version of golangci-lint in here
 lint_modfile=modfiles/golangci-lint/go.mod
-.PHONY: lint
-lint:
+.PHONY: go-lint
+go-lint:
 	@go tool -modfile=$(lint_modfile) golangci-lint run --config .golangci.yaml
 
-.PHONY: lint-fix
-lint-fix:
-	@go tool -modfile=$(lint_modfile) golangci-lint run --config .golangci.yaml --fix
-
-.PHONY: lint-version
-lint-version:
+.PHONY: go-lint-version
+go-lint-version:
 	@go tool -modfile=$(lint_modfile) golangci-lint --version
 
 mockery_modfile=modfiles/mockery/go.mod
@@ -39,3 +35,23 @@ mock-version:
 .PHONY: tidy
 tidy:
 	@go mod tidy
+
+.PHONY: sol-fmt
+sol-fmt:
+	@forge fmt
+
+.PHONY: sol-lint
+sol-lint:
+	@forge lint
+
+.PHONY: sol-build
+sol-build:
+	@forge build
+
+.PHONY: sol-test
+sol-test:
+	@forge test -vvv
+
+.PHONY: clean
+clean:
+	@forge clean
