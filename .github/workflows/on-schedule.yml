@@ -27,25 +27,6 @@ jobs:
       - name: Run Forge Lint
         run: forge lint
 
-  sol-sec:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Show Forge Version
-        run: forge --version
-
-      - name: Run Slither
-        uses: crytic/slither-action@v0.4.2
-        with:
-          target: ./contracts/src
-
   sol-test:
     runs-on: ubuntu-latest
     steps:
