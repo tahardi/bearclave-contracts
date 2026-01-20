@@ -1,0 +1,29 @@
+processes:
+  anvil:
+    description: Foundry Local Ethereum Node
+    command: anvil
+    ready_log_line: "Listening on"
+  deploy:
+    description: Deploy Hello World Contract
+    command: |
+      DEPLOY_OUTPUT=$(forge create HelloWorld \
+        --broadcast \
+        --rpc-url http://localhost:8545 \
+        --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+      echo "Deployment output: $DEPLOY_OUTPUT"
+      CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Deployed to: \K0x[a-fA-F0-9]{40}' | head -1)
+      if [ -z "$CONTRACT_ADDRESS" ]; then \
+      	echo "Failed to extract contract address from deployment"; \
+      	exit 1; \
+      fi; \
+      echo "Deployed contract at: $CONTRACT_ADDRESS"
+      echo "Running integration tests..."
+      CONTRACT_ADDRESS=$CONTRACT_ADDRESS \
+      HOST="127.0.0.1" \
+      PORT="8545" \
+      go test -v ./test/integration/hello-world/helloworld_test.go
+    depends_on:
+      anvil:
+        condition: process_log_ready
+    availability:
+      exit_on_end: true

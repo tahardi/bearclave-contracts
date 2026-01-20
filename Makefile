@@ -7,7 +7,16 @@ SHELL := bash
 .SUFFIXES:
 
 .PHONY: pre-pr
-pre-pr: tidy sol-fmt sol-lint sol-sec sol-test
+pre-pr: \
+	tidy \
+	mock \
+	go-lint \
+	go-test-unit \
+	sol-fmt \
+	sol-lint \
+	sol-sec \
+	sol-test-unit \
+	test-integration
 
 # https://golangci-lint.run/welcome/install/#install-from-sources
 # They do not recommend using golangci-lint via go tool directive
@@ -36,6 +45,13 @@ mock-version:
 tidy:
 	@go mod tidy
 
+.PHONY: go-test-unit
+go-test-unit: go-test-unit-internal
+
+.PHONY: go-test-unit-internal
+go-test-unit-internal:
+	@go test -v -count=1 -race ./internal/...
+
 .PHONY: sol-build
 sol-build:
 	@forge build
@@ -52,9 +68,21 @@ sol-lint:
 sol-sec:
 	@slither ./contracts/src
 
-.PHONY: sol-test
-sol-test: sol-build
+.PHONY: sol-test-unit
+sol-test-unit: sol-build
 	@forge test -vvv
+
+.PHONY: test-integration
+test-integration: \
+	test-integration-hello-world
+
+.PHONY: test-integration-hello-world
+test-integration-hello-world: sol-build tidy
+	@process-compose up \
+		--tui=false \
+		--port=8079 \
+		-f ./test/integration/hello-world/.process-compose.yaml \
+		2> /dev/null
 
 .PHONY: clean
 clean:
