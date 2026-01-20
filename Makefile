@@ -15,6 +15,7 @@ pre-pr: \
 	sol-lint \
 	sol-sec \
 	sol-test-unit \
+	bindings \
 	test-integration
 
 ################################################################################
@@ -45,6 +46,10 @@ tidy:
 ################################################################################
 # Solidity Targets
 ################################################################################
+contracts_dir=./contracts
+out_dir=$(contracts_dir)/out
+src_dir=$(contracts_dir)/src
+
 .PHONY: sol-build
 sol-build:
 	@forge build
@@ -59,7 +64,7 @@ sol-lint:
 
 .PHONY: sol-sec
 sol-sec:
-	@slither ./contracts/src
+	@slither $(src_dir)
 
 .PHONY: sol-test-unit
 sol-test-unit: sol-build
@@ -68,9 +73,24 @@ sol-test-unit: sol-build
 ################################################################################
 # Shared Targets
 ################################################################################
+bindings_dir=$(contracts_dir)/bindings
+bindings_pkg=bindings
+integration_dir=./test/integration
 process_compose_port=8079
 process_compose_config=.process-compose.yaml
-integration_dir=./test/integration
+
+.PHONY: bindings
+bindings: \
+	bindings-hello-world
+
+.PHONY: bindings-hello-world
+bindings-hello-world: sol-build
+	@jq '.abi' $(out_dir)/HelloWorld.sol/HelloWorld.json | \
+	abigen \
+		--abi /dev/stdin \
+		--pkg $(bindings_pkg) \
+		--type HelloWorld \
+		--out $(bindings_dir)/helloworld.go
 
 .PHONY: test-integration
 test-integration: \
@@ -80,8 +100,8 @@ test-integration: \
 test-integration-hello-world: sol-build tidy
 	@process-compose up \
 		--tui=false \
-		--port=${process_compose_port} \
-		-f ${integration_dir}/hello-world/${process_compose_config} \
+		--port=$(process_compose_port) \
+		-f $(integration_dir)/hello-world/$(process_compose_config) \
 		2> /dev/null
 
 .PHONY: clean
