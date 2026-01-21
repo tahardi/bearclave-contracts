@@ -1,4 +1,4 @@
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.33;
 
 import {HelloWorld} from "../src/HelloWorld.sol";
 import {Script} from "forge-std/Script.sol";
@@ -10,9 +10,7 @@ contract HelloWorldScript is Script {
 
     function run() public {
         vm.startBroadcast();
-
         hw = new HelloWorld();
-
         vm.stopBroadcast();
     }
 }
