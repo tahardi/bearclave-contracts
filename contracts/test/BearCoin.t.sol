@@ -44,7 +44,8 @@ contract BearCoinTest is Test {
         emit IERC20.Transfer(owner, alice, transferAmount);
 
         // when
-        bcn.transfer(alice, transferAmount);
+        // https://getfoundry.sh/forge/linting/#erc20-unchecked-transfer
+        require(bcn.transfer(alice, transferAmount), "Transfer failed");
 
         // then
         assertEq(bcn.balanceOf(alice), transferAmount);
@@ -61,7 +62,7 @@ contract BearCoinTest is Test {
         emit IERC20.Transfer(owner, owner, transferAmount);
 
         // when
-        bcn.transfer(owner, transferAmount);
+        require(bcn.transfer(owner, transferAmount), "Transfer failed");
 
         // then
         assertEq(bcn.balanceOf(owner), initialBalance);
@@ -83,7 +84,7 @@ contract BearCoinTest is Test {
             );
 
         // when/then
-        bcn.transfer(bob, transferAmount);
+        require(bcn.transfer(bob, transferAmount), "Transfer failed");
     }
 
     function test_transferFrom() public {
@@ -103,7 +104,7 @@ contract BearCoinTest is Test {
         vm.expectEmit(true, true, false, true);
         emit IERC20.Transfer(owner, bob, transferAmount);
 
-        bcn.transferFrom(owner, bob, transferAmount);
+        require(bcn.transferFrom(owner, bob, transferAmount), "Transfer failed");
 
         // then
         assertEq(bcn.balanceOf(bob), transferAmount);
@@ -128,7 +129,7 @@ contract BearCoinTest is Test {
         vm.expectEmit(true, true, false, true);
         emit IERC20.Transfer(owner, bob, transferAmount);
 
-        bcn.transferFrom(owner, bob, transferAmount);
+        require(bcn.transferFrom(owner, bob, transferAmount), "Transfer failed");
 
         // then
         assertEq(bcn.allowance(owner, alice), approveAmount);
@@ -152,7 +153,7 @@ contract BearCoinTest is Test {
         );
 
         // when/then
-        bcn.transferFrom(owner, bob, transferAmount);
+        require(bcn.transferFrom(owner, bob, transferAmount), "Transfer failed");
     }
 
     function test_approve() public {
@@ -246,7 +247,7 @@ contract BearCoinTest is Test {
         vm.expectEmit(true, true, false, true);
         emit IERC20.Transfer(owner, alice, transferAmount);
 
-        bcn.transfer(alice, transferAmount);
+        require(bcn.transfer(alice, transferAmount), "Transfer failed");
         assertEq(bcn.balanceOf(alice), transferAmount);
 
         // when
