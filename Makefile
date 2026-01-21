@@ -81,7 +81,17 @@ process_compose_config=.process-compose.yaml
 
 .PHONY: bindings
 bindings: \
+	bindings-bear-coin \
 	bindings-hello-world
+
+.PHONY: bindings-bear-coin
+bindings-bear-coin: sol-build
+	@jq '.abi' $(out_dir)/BearCoin.sol/BearCoin.json | \
+	abigen \
+		--abi /dev/stdin \
+		--pkg $(bindings_pkg) \
+		--type BearCoin \
+		--out $(bindings_dir)/bearcoin.go
 
 .PHONY: bindings-hello-world
 bindings-hello-world: sol-build
