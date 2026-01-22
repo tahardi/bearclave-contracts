@@ -2,7 +2,6 @@ package foundry
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -18,7 +17,7 @@ func BytesToHexString(b []byte) string {
 }
 
 func Uint64ToHexString(n uint64) string {
-	return HexStringPrefix + fmt.Sprintf("%x", n)
+	return HexStringPrefix + strconv.FormatUint(n, HexBase)
 }
 
 func ParseBytesFromHexString(s string) ([]byte, error) {

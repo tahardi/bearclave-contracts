@@ -22,6 +22,7 @@ type InnerTransaction struct {
 	ChainID uint64
 }
 
+//nolint:tagliatelle
 type innerJSON struct {
 	From    *common.Address `json:"from"`
 	Gas     string          `json:"gas"`
@@ -92,13 +93,14 @@ type Transaction struct {
 	IsFixedGasLimit bool
 }
 
+//nolint:tagliatelle
 type transactionJSON struct {
-	Hash            string           `json:"hash"`
-	TransactionType string           `json:"transactionType"`
-	ContractName    string           `json:"contractName"`
-	ContractAddress *common.Address  `json:"contractAddress"`
+	Hash            string            `json:"hash"`
+	TransactionType string            `json:"transactionType"`
+	ContractName    string            `json:"contractName"`
+	ContractAddress *common.Address   `json:"contractAddress"`
 	Inner           *InnerTransaction `json:"transaction"`
-	IsFixedGasLimit bool             `json:"isFixedGasLimit"`
+	IsFixedGasLimit bool              `json:"isFixedGasLimit"`
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {

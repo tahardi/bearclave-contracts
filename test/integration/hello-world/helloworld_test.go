@@ -1,6 +1,7 @@
 package helloworld_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,13 +19,14 @@ func TestHelloWorld(t *testing.T) {
 	anvil, err := foundry.NewAnvil(broadcastDir, scriptDir)
 	require.NoError(t, err)
 
-	err = anvil.Start()
+	ctx := context.Background()
+	err = anvil.Start(ctx)
 	require.NoError(t, err)
-	defer anvil.Stop()
+	defer func() { _ = anvil.Stop() }()
 
 	owner := anvil.Account(0)
 	contractName := "HelloWorld"
-	contractAddress, err := anvil.DeployContract(contractName, owner)
+	contractAddress, err := anvil.DeployContract(ctx, contractName, owner)
 	require.NoError(t, err)
 
 	client, err := ethclient.Dial(anvil.URL())

@@ -30,6 +30,7 @@ type Receipt struct {
 	ContractAddress   *common.Address
 }
 
+//nolint:tagliatelle
 type receiptJSON struct {
 	Status            string `json:"status"`
 	CumulativeGasUsed string `json:"cumulativeGasUsed"`

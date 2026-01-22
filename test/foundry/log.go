@@ -23,6 +23,7 @@ type Log struct {
 	Removed          bool
 }
 
+//nolint:tagliatelle
 type logJSON struct {
 	Address          string   `json:"address"`
 	Topics           []string `json:"topics"`
