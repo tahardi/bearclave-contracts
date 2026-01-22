@@ -3,6 +3,7 @@
 **/bin
 **/cache
 **/out
+**/broadcast
 
 *.db
 *.env
