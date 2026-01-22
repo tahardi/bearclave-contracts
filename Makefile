@@ -11,10 +11,11 @@ pre-pr: \
 	tidy \
 	mock \
 	go-lint \
+	go-test \
 	sol-fmt \
 	sol-lint \
 	sol-sec \
-	sol-test-unit \
+	sol-test \
 	bindings \
 	test-integration
 
@@ -43,6 +44,13 @@ mock-version:
 tidy:
 	@go mod tidy
 
+.PHONY: go-test
+go-test: go-test-foundry
+
+.PHONY: go-test-foundry
+go-test-foundry:
+	@go test -v -count=1 -race ./test/foundry/...
+
 ################################################################################
 # Solidity Targets
 ################################################################################
@@ -68,8 +76,8 @@ sol-lint:
 sol-sec:
 	@slither $(src_dir) --config-file .slither-config.json
 
-.PHONY: sol-test-unit
-sol-test-unit: sol-build
+.PHONY: sol-test
+sol-test: sol-build
 	@forge test -vvv
 
 ################################################################################
@@ -78,8 +86,6 @@ sol-test-unit: sol-build
 bindings_dir=$(contracts_dir)/bindings
 bindings_pkg=bindings
 integration_dir=./test/integration
-process_compose_port=8079
-process_compose_config=.process-compose.yaml
 
 .PHONY: bindings
 bindings: \
@@ -110,11 +116,7 @@ test-integration: \
 
 .PHONY: test-integration-hello-world
 test-integration-hello-world: sol-build tidy
-	@process-compose up \
-		--tui=false \
-		--port=$(process_compose_port) \
-		-f $(integration_dir)/hello-world/$(process_compose_config) \
-		2> /dev/null
+	@go test -v -count=1 $(integration_dir)/hello-world/helloworld_test.go
 
 .PHONY: clean
 clean:

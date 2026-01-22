@@ -1,32 +1,39 @@
 package helloworld_test
 
 import (
-	"net"
-	"os"
+	"context"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tahardi/bearchain/contracts/bindings"
+	"github.com/tahardi/bearchain/test/foundry"
 )
 
 func TestHelloWorld(t *testing.T) {
 	// given
-	host, ok := os.LookupEnv("HOST")
-	require.True(t, ok)
-	port, ok := os.LookupEnv("PORT")
-	require.True(t, ok)
-	contractAddress, ok := os.LookupEnv("CONTRACT_ADDRESS")
-	require.True(t, ok)
+	broadcastDir := "../../../contracts/broadcast"
+	scriptDir := "../../../contracts/scripts"
 
-	url := "http://" + net.JoinHostPort(host, port)
-	client, err := ethclient.Dial(url)
+	anvil, err := foundry.NewAnvil(broadcastDir, scriptDir)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	err = anvil.Start(ctx)
+	require.NoError(t, err)
+	defer func() { _ = anvil.Stop() }()
+
+	owner := anvil.Account(0)
+	contractName := "HelloWorld"
+	contractAddress, err := anvil.DeployContract(ctx, contractName, owner)
+	require.NoError(t, err)
+
+	client, err := ethclient.Dial(anvil.URL())
 	require.NoError(t, err)
 
 	want := "Hello, World!"
-	hwContract, err := bindings.NewHelloWorld(common.HexToAddress(contractAddress), client)
+	hwContract, err := bindings.NewHelloWorld(*contractAddress, client)
 	require.NoError(t, err)
 
 	// when
