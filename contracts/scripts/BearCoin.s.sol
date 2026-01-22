@@ -1,16 +1,16 @@
 pragma solidity ^0.8.33;
 
-import {HelloWorld} from "../src/HelloWorld.sol";
+import {BearCoin} from "../src/BearCoin.sol";
 import {Script} from "forge-std/Script.sol";
 
-contract HelloWorldScript is Script {
-    HelloWorld public hw;
+contract BearCoinScript is Script {
+    BearCoin public bcn;
 
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
-        hw = new HelloWorld();
+        bcn = new BearCoin();
         vm.stopBroadcast();
     }
 }
