@@ -110,11 +110,7 @@ test-integration: \
 
 .PHONY: test-integration-hello-world
 test-integration-hello-world: sol-build tidy
-	@process-compose up \
-		--tui=false \
-		--port=$(process_compose_port) \
-		-f $(integration_dir)/hello-world/$(process_compose_config) \
-		2> /dev/null
+	@go test -v $(integration_dir)/hello-world/helloworld_test.go
 
 .PHONY: clean
 clean:
