@@ -15,7 +15,7 @@ pre-pr: \
 	sol-fmt \
 	sol-lint \
 	sol-sec \
-	sol-test-unit \
+	sol-test \
 	bindings \
 	test-integration
 
@@ -76,8 +76,8 @@ sol-lint:
 sol-sec:
 	@slither $(src_dir) --config-file .slither-config.json
 
-.PHONY: sol-test-unit
-sol-test-unit: sol-build
+.PHONY: sol-test
+sol-test: sol-build
 	@forge test -vvv
 
 ################################################################################
