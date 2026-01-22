@@ -9,7 +9,7 @@ contract BearCoinScript is Script {
     function setUp() public {}
 
     function run() public {
-        vm.stopBroadcast();
+        vm.startBroadcast();
         bcn = new BearCoin();
         vm.stopBroadcast();
     }
