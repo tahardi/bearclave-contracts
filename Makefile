@@ -47,6 +47,8 @@ tidy:
 # Solidity Targets
 ################################################################################
 contracts_dir=./contracts
+broadcast_dir=$(contracts_dir)/broadcast
+cache_dir=$(contracts_dir)/cache
 out_dir=$(contracts_dir)/out
 src_dir=$(contracts_dir)/src
 
@@ -64,7 +66,7 @@ sol-lint:
 
 .PHONY: sol-sec
 sol-sec:
-	@slither $(src_dir)
+	@slither $(src_dir) --config-file .slither-config.json
 
 .PHONY: sol-test-unit
 sol-test-unit: sol-build
@@ -116,4 +118,6 @@ test-integration-hello-world: sol-build tidy
 
 .PHONY: clean
 clean:
-	@forge clean
+	forge clean
+	rm -rf $(broadcast_dir)
+	rm -rf $(cache_dir)

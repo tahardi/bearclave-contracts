@@ -7,6 +7,7 @@ cache_path = 'contracts/cache'
 libs = ['contracts/libs']
 out = 'contracts/out'
 remappings = ['forge-std/=contracts/libs/forge-std/src/']
+solc = '0.8.33'
 script = 'contracts/scripts'
 src = 'contracts/src'
 test = 'contracts/test'
