@@ -4,8 +4,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract BearCoin is ERC20 {
     uint8 public constant DECIMALS = 18;
-    uint32 public constant MILLION = 1000000;
-    uint256 public constant TOTAL_SUPPLY = MILLION * 10**uint256(DECIMALS);
+    uint256 public constant TOTAL_SUPPLY = 1_000_000 * 10 ** uint256(DECIMALS);
 
     address public owner;
 
@@ -33,6 +32,7 @@ contract BearCoin is ERC20 {
     }
 
     function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "New owner cannot be null");
         owner = newOwner;
     }
 

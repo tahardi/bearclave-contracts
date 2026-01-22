@@ -5,13 +5,11 @@ import {BearCoin} from "../src/BearCoin.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-
 contract BearCoinTest is Test {
     BearCoin public bcn;
     address public owner;
     address public alice;
     address public bob;
-
 
     function setUp() public {
         owner = address(1);
@@ -26,10 +24,10 @@ contract BearCoinTest is Test {
         assertEq(bcn.name(), "BearCoin");
         assertEq(bcn.symbol(), "BCN");
         assertEq(bcn.decimals(), 18);
-        assertEq(bcn.totalSupply(), 1000000 * 10**18);
+        assertEq(bcn.totalSupply(), 1000000 * 10 ** 18);
 
         assertEq(bcn.owner(), owner);
-        assertEq(bcn.balanceOf(owner), 1000000 * 10**18);
+        assertEq(bcn.balanceOf(owner), 1000000 * 10 ** 18);
 
         assertEq(bcn.balanceOf(alice), 0);
         assertEq(bcn.balanceOf(bob), 0);
@@ -37,7 +35,7 @@ contract BearCoinTest is Test {
 
     function test_transfer() public {
         // given
-        uint256 transferAmount = 100 * 10**18;
+        uint256 transferAmount = 100 * 10 ** 18;
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
@@ -54,7 +52,7 @@ contract BearCoinTest is Test {
 
     function test_transfer_to_self() public {
         // given
-        uint256 transferAmount = 100 * 10**18;
+        uint256 transferAmount = 100 * 10 ** 18;
         uint256 initialBalance = bcn.balanceOf(owner);
 
         vm.prank(owner);
@@ -71,26 +69,21 @@ contract BearCoinTest is Test {
     function test_transfer_revert_insufficient_balance() public {
         // given
         uint256 balance = bcn.balanceOf(alice);
-        uint256 transferAmount = 100 * 10**18;
+        uint256 transferAmount = 100 * 10 ** 18;
 
         vm.prank(alice);
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    IERC20Errors.ERC20InsufficientBalance.selector,
-                    alice,
-                    balance,
-                    transferAmount
-                )
-            );
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, alice, balance, transferAmount)
+        );
 
         // when/then
-        require(bcn.transfer(bob, transferAmount), "Transfer failed");
+        require(!bcn.transfer(bob, transferAmount), "Transfer succeeded");
     }
 
     function test_transferFrom() public {
         // given
-        uint256 approveAmount = 200 * 10**bcn.decimals();
-        uint256 transferAmount = 100 * 10**bcn.decimals();
+        uint256 approveAmount = 200 * 10 ** bcn.decimals();
+        uint256 transferAmount = 100 * 10 ** bcn.decimals();
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
@@ -115,7 +108,7 @@ contract BearCoinTest is Test {
     function test_transferFrom_unlimited_allowance() public {
         // given
         uint256 approveAmount = type(uint256).max;
-        uint256 transferAmount = 100 * 10**bcn.decimals();
+        uint256 transferAmount = 100 * 10 ** bcn.decimals();
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
@@ -140,25 +133,20 @@ contract BearCoinTest is Test {
         uint256 allowance = bcn.allowance(owner, alice);
         assertEq(allowance, 0);
 
-        uint256 transferAmount = 100 * 10**bcn.decimals();
+        uint256 transferAmount = 100 * 10 ** bcn.decimals();
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC20Errors.ERC20InsufficientAllowance.selector,
-                alice,
-                allowance,
-                transferAmount
-            )
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, alice, allowance, transferAmount)
         );
 
         // when/then
-        require(bcn.transferFrom(owner, bob, transferAmount), "Transfer failed");
+        require(!bcn.transferFrom(owner, bob, transferAmount), "Transfer succeded");
     }
 
     function test_approve() public {
         // given
-        uint256 approveAmount = 500 * 10**bcn.decimals();
+        uint256 approveAmount = 500 * 10 ** bcn.decimals();
         assertEq(bcn.allowance(owner, alice), 0);
 
         vm.prank(owner);
@@ -174,7 +162,7 @@ contract BearCoinTest is Test {
 
     function test_mint() public {
         // given
-        uint256 burnAmount = 100 * 10**bcn.decimals();
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
         uint256 initialBalance = bcn.balanceOf(owner);
         uint256 initialSupply = bcn.totalSupply();
 
@@ -201,7 +189,7 @@ contract BearCoinTest is Test {
 
     function test_mint_revert_not_owner() public {
         // given
-        uint256 mintAmount = 100 * 10**bcn.decimals();
+        uint256 mintAmount = 100 * 10 ** bcn.decimals();
         vm.expectRevert("Not owner");
 
         // when/then
@@ -221,7 +209,7 @@ contract BearCoinTest is Test {
 
     function test_burn() public {
         // given
-        uint256 burnAmount = 100 * 10**bcn.decimals();
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
         uint256 initialBalance = bcn.balanceOf(owner);
         uint256 initialSupply = bcn.totalSupply();
 
@@ -239,8 +227,8 @@ contract BearCoinTest is Test {
 
     function test_burn_non_owner() public {
         // given
-        uint256 burnAmount = 50 * 10**bcn.decimals();
-        uint256 transferAmount = 100 * 10**bcn.decimals();
+        uint256 burnAmount = 50 * 10 ** bcn.decimals();
+        uint256 transferAmount = 100 * 10 ** bcn.decimals();
         uint256 initialSupply = bcn.totalSupply();
 
         vm.prank(owner);
@@ -264,18 +252,13 @@ contract BearCoinTest is Test {
 
     function test_burn_revert_insufficient_balance() public {
         // given
-        uint256 burnAmount = 100 * 10**bcn.decimals();
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
         uint256 balance = bcn.balanceOf(alice);
         assertEq(balance, 0);
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC20Errors.ERC20InsufficientBalance.selector,
-                alice,
-                balance,
-                burnAmount
-            )
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, alice, balance, burnAmount)
         );
 
         // when/then
