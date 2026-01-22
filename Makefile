@@ -78,8 +78,6 @@ sol-test-unit: sol-build
 bindings_dir=$(contracts_dir)/bindings
 bindings_pkg=bindings
 integration_dir=./test/integration
-process_compose_port=8079
-process_compose_config=.process-compose.yaml
 
 .PHONY: bindings
 bindings: \
