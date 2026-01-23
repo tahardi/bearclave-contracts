@@ -29,10 +29,6 @@ jobs:
 
   go-test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        test: [ hello-world ]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v5
@@ -84,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: [hello-world]
+        test: [hello-world, bear-coin]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v5
