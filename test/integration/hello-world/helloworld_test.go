@@ -1,32 +1,26 @@
 package helloworld_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tahardi/bearchain/contracts/bindings"
-	"github.com/tahardi/bearchain/test/foundry"
+	"github.com/tahardi/bearchain/test/integration"
+)
+
+const (
+	ContractName = "HelloWorld"
 )
 
 func TestHelloWorld(t *testing.T) {
 	// given
-	broadcastDir := "../../../contracts/broadcast"
-	scriptDir := "../../../contracts/scripts"
-
-	anvil, err := foundry.NewAnvil(broadcastDir, scriptDir)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	err = anvil.Start(ctx)
-	require.NoError(t, err)
-	defer func() { _ = anvil.Stop() }()
+	anvil, stop := integration.StartAnvil(t, true)
+	defer stop()
 
 	owner := anvil.Account(0)
-	contractName := "HelloWorld"
-	contractAddress, err := anvil.DeployContract(ctx, contractName, owner)
+	contractAddress, err := anvil.DeployContract(t.Context(), ContractName, owner)
 	require.NoError(t, err)
 
 	client, err := ethclient.Dial(anvil.URL())
