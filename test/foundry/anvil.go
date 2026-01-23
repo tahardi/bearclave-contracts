@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math/big"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const (
@@ -17,7 +21,7 @@ const (
 	ForgeCommand  = "forge"
 	ScriptCommand = "script"
 
-	BroadcastFlag = "--broadcast"
+	BroadcastFlag  = "--broadcast"
 	PrivateKeyFlag = "--private-key"
 	RPCFlag        = "--rpc-url"
 
@@ -46,7 +50,7 @@ const (
 	GenesisNumber    = 0
 	StartingBalance  = 10_000
 	URL              = "http://127.0.0.1:8545"
-	WaitTime         = 250 * time.Millisecond
+	WaitTime         = 150 * time.Millisecond
 )
 
 var (
@@ -56,14 +60,15 @@ var (
 type Anvil struct {
 	accounts         []*Account
 	baseFee          uint64
-	chainID          uint64
+	chainID          *big.Int
 	gasLimit         uint64
 	genesisTimestamp uint64
 	genesisNumber    uint64
 	url              string
-	server           *exec.Cmd
 	broadcastDir     string
 	scriptDir        string
+	client           *ethclient.Client
+	server           *exec.Cmd
 }
 
 func NewAnvil(
@@ -78,31 +83,41 @@ func NewAnvil(
 	return &Anvil{
 		accounts:         accounts,
 		baseFee:          BaseFee,
-		chainID:          ChainID,
+		chainID:          big.NewInt(ChainID),
 		gasLimit:         GasLimit,
 		genesisTimestamp: GenesisTimestamp,
 		genesisNumber:    GenesisNumber,
 		url:              URL,
 		broadcastDir:     broadcastDir,
 		scriptDir:        scriptDir,
+		client:           nil,
+		server:           nil,
 	}, nil
 }
 
 func (a *Anvil) Accounts() []*Account     { return a.accounts }
 func (a *Anvil) Account(i int) *Account   { return a.accounts[i] }
 func (a *Anvil) BaseFee() uint64          { return a.baseFee }
-func (a *Anvil) ChainID() uint64          { return a.chainID }
+func (a *Anvil) ChainID() *big.Int        { return a.chainID }
 func (a *Anvil) GasLimit() uint64         { return a.gasLimit }
 func (a *Anvil) GenesisTimestamp() uint64 { return a.genesisTimestamp }
 func (a *Anvil) GenesisNumber() uint64    { return a.genesisNumber }
 func (a *Anvil) URL() string              { return a.url }
 
-func (a *Anvil) Start(ctx context.Context) error {
+func (a *Anvil) Start(ctx context.Context, silent bool) error {
 	go func() {
 		a.server = exec.CommandContext(ctx, AnvilCommand)
-		out, err := a.server.CombinedOutput()
-		if err != nil {
-			fmt.Printf("%s: starting anvil: %s\n", ErrAnvil.Error(), string(out))
+		if silent {
+			a.server.Stdout = io.Discard
+			a.server.Stderr = io.Discard
+		} else {
+			a.server.Stdout = os.Stdout
+			a.server.Stderr = os.Stderr
+		}
+
+		err := a.server.Run()
+		if err != nil && !strings.Contains(err.Error(), "signal: killed") {
+			fmt.Printf("%s: starting anvil: %s\n", ErrAnvil.Error(), err.Error())
 		}
 	}()
 
@@ -115,6 +130,19 @@ func (a *Anvil) Stop() error {
 		return a.server.Process.Kill()
 	}
 	return nil
+}
+
+func (a *Anvil) Client() (*ethclient.Client, error) {
+	if a.client != nil {
+		return a.client, nil
+	}
+
+	client, err := ethclient.Dial(a.url)
+	if err != nil {
+		return nil, fmt.Errorf("%w: dialing client: %w", ErrAnvil, err)
+	}
+	a.client = client
+	return a.client, nil
 }
 
 // DeployContract deploys a smart contract via the `forge script` command.

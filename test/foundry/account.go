@@ -48,7 +48,7 @@ var (
 )
 
 type Account struct {
-	address       *common.Address
+	address       common.Address
 	privateKey    *ecdsa.PrivateKey
 	privateKeyHex string
 	balance       uint64
@@ -78,13 +78,13 @@ func NewAccount(
 
 	addr := common.HexToAddress(address)
 	return &Account{
-		address:       &addr,
+		address:       addr,
 		privateKey:    privateKey,
 		privateKeyHex: privateKeyHex,
 		balance:       balance,
 	}, nil
 }
 
-func (a *Account) Address() *common.Address      { return a.address }
+func (a *Account) Address() common.Address      { return a.address }
 func (a *Account) PrivateKey() *ecdsa.PrivateKey { return a.privateKey }
 func (a *Account) PrivateKeyHex() string         { return a.privateKeyHex }

@@ -112,14 +112,20 @@ bindings-hello-world: sol-build
 
 .PHONY: test-integration
 test-integration: \
+	test-integration-bear-coin \
 	test-integration-hello-world
+
+.PHONY: test-integration-bear-coin
+test-integration-bear-coin: sol-build tidy
+	@go test -v -count=1 $(integration_dir)/bear-coin/...
 
 .PHONY: test-integration-hello-world
 test-integration-hello-world: sol-build tidy
-	@go test -v -count=1 $(integration_dir)/hello-world/helloworld_test.go
+	@go test -v -count=1 $(integration_dir)/hello-world/...
 
 .PHONY: clean
 clean:
 	forge clean
 	rm -rf $(broadcast_dir)
 	rm -rf $(cache_dir)
+	rm -rf $(out_dir)
