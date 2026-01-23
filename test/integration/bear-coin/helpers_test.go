@@ -11,6 +11,22 @@ import (
 	"github.com/tahardi/bearchain/test/foundry"
 )
 
+func approve(
+	t *testing.T,
+	anvil *foundry.Anvil,
+	contract *bindings.BearCoin,
+	principal *foundry.Account,
+	proxy *foundry.Account,
+	amount *big.Int,
+) (*types.Receipt, error) {
+	t.Helper()
+	opts := newTransactionOpts(t, anvil, principal)
+	call := func() (*types.Transaction, error) {
+		return contract.Approve(opts, proxy.Address(), amount)
+	}
+	return executeCall(t, anvil, call)
+}
+
 func burn(
 	t *testing.T,
 	anvil *foundry.Anvil,
@@ -65,12 +81,12 @@ func mint(
 	t *testing.T,
 	anvil *foundry.Anvil,
 	contract *bindings.BearCoin,
-	from *foundry.Account,
+	owner *foundry.Account,
 	to *foundry.Account,
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, from)
+	opts := newTransactionOpts(t, anvil, owner)
 	call := func() (*types.Transaction, error) {
 		return contract.Mint(opts, to.Address(), amount)
 	}
@@ -86,6 +102,23 @@ func newTransactionOpts(
 	opts, err := bind.NewKeyedTransactorWithChainID(from.PrivateKey(), anvil.ChainID())
 	require.NoError(t, err)
 	return opts
+}
+
+func requireAllowance(
+	t *testing.T,
+	contract *bindings.BearCoin,
+	principal *foundry.Account,
+	proxy *foundry.Account,
+	want *big.Int,
+) {
+	t.Helper()
+	got, err := contract.Allowance(nil, principal.Address(), proxy.Address())
+	require.NoError(t, err)
+	if want == nil {
+		require.Equal(t, 0, got.Cmp(big.NewInt(0)))
+	} else {
+		require.Equal(t, want, got)
+	}
 }
 
 func requireBalance(
@@ -104,10 +137,54 @@ func requireBalance(
 	}
 }
 
+func requireMaxUint256(t *testing.T) *big.Int {
+	t.Helper()
+	maxUint256, ok := new(big.Int).
+		SetString(
+			"115792089237316195423570985008687907853269984665640564039457584007913129639935",
+			10,
+		)
+	require.True(t, ok)
+	return maxUint256
+}
+
 func totalSupply() *big.Int {
 	decimals := big.NewInt(Decimals)
 	base := big.NewInt(Base)
 	ten := big.NewInt(10)
 	pow := big.NewInt(0).Exp(ten, decimals, nil)
 	return big.NewInt(0).Mul(pow, base)
+}
+
+func transfer(
+	t *testing.T,
+	anvil *foundry.Anvil,
+	contract *bindings.BearCoin,
+	from *foundry.Account,
+	to *foundry.Account,
+	amount *big.Int,
+) (*types.Receipt, error) {
+	t.Helper()
+	opts := newTransactionOpts(t, anvil, from)
+	call := func() (*types.Transaction, error) {
+		return contract.Transfer(opts, to.Address(), amount)
+	}
+	return executeCall(t, anvil, call)
+}
+
+func transferFrom(
+	t *testing.T,
+	anvil *foundry.Anvil,
+	contract *bindings.BearCoin,
+	principal *foundry.Account,
+	proxy *foundry.Account,
+	to *foundry.Account,
+	amount *big.Int,
+) (*types.Receipt, error) {
+	t.Helper()
+	opts := newTransactionOpts(t, anvil, proxy)
+	call := func() (*types.Transaction, error) {
+		return contract.TransferFrom(opts, principal.Address(), to.Address(), amount)
+	}
+	return executeCall(t, anvil, call)
 }

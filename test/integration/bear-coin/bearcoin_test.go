@@ -16,13 +16,40 @@ const (
 	Base         = 1_000_000
 )
 
-// func TestBearCoin_Allowance(t *testing.T) {
-//
-// }
-//
-// func TestBearCoin_Approve(t *testing.T) {
-//
-// }
+func TestBearCoin_Allowance(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		owner, other := anvil.Account(0), anvil.Account(1)
+		contract := deployContract(t, anvil, owner)
+
+		// when/then
+		requireAllowance(t, contract, owner, other, nil)
+		requireAllowance(t, contract, other, owner, nil)
+	})
+}
+
+func TestBearCoin_Approve(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner, other := anvil.Account(0), anvil.Account(1)
+		contract := deployContract(t, anvil, owner)
+		requireAllowance(t, contract, owner, other, nil)
+
+		// when
+		_, err := approve(t, anvil, contract, owner, other, amount)
+
+		// then
+		require.NoError(t, err)
+		requireAllowance(t, contract, owner, other, amount)
+	})
+}
 
 func TestBearCoin_BalanceOf(t *testing.T) {
 	t.Run("happy path - owner", func(t *testing.T) {
@@ -262,13 +289,165 @@ func TestBearCoin_TotalSupply(t *testing.T) {
 	})
 }
 
-// func TestBearCoin_Transfer(t *testing.T) {
-//
-// }
-//
-// func TestBearCoin_TransferFrom(t *testing.T) {
-//
-// }
+func TestBearCoin_Transfer(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner, other := anvil.Account(0), anvil.Account(1)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, other, nil)
+
+		// when
+		_, err := transfer(t, anvil, contract, owner, other, amount)
+
+		// then
+		require.NoError(t, err)
+		requireBalance(t, contract, owner, totalSupply().Sub(totalSupply(), amount))
+		requireBalance(t, contract, other, amount)
+	})
+
+	t.Run("happy path - transfer to self", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner := anvil.Account(0)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+
+		// when
+		_, err := transfer(t, anvil, contract, owner, owner, amount)
+
+		// then
+		require.NoError(t, err)
+		requireBalance(t, contract, owner, totalSupply())
+	})
+
+	t.Run("error - insufficient funds", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner, other := anvil.Account(0), anvil.Account(1)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, other, nil)
+
+		// when
+		_, err := transfer(t, anvil, contract, other, owner, amount)
+
+		// then
+		require.Error(t, err)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, other, nil)
+	})
+}
+
+func TestBearCoin_TransferFrom(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner, alice, bob := anvil.Account(0), anvil.Account(1), anvil.Account(2)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+
+		_, err := approve(t, anvil, contract, owner, alice, amount)
+		require.NoError(t, err)
+		requireAllowance(t, contract, owner, alice, amount)
+
+		// when
+		_, err = transferFrom(t, anvil, contract, owner, alice, bob, amount)
+
+		// then
+		require.NoError(t, err)
+		requireBalance(t, contract, owner, totalSupply().Sub(totalSupply(), amount))
+		requireBalance(t, contract, bob, amount)
+		requireAllowance(t, contract, owner, alice, nil)
+	})
+
+	t.Run("happy path - unlimited allowance", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		unlimited := requireMaxUint256(t)
+		amount := big.NewInt(100)
+		owner, alice, bob := anvil.Account(0), anvil.Account(1), anvil.Account(2)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+
+		_, err := approve(t, anvil, contract, owner, alice, unlimited)
+		require.NoError(t, err)
+		requireAllowance(t, contract, owner, alice, unlimited)
+
+		// when
+		_, err = transferFrom(t, anvil, contract, owner, alice, bob, amount)
+
+		// then
+		require.NoError(t, err)
+		requireBalance(t, contract, owner, totalSupply().Sub(totalSupply(), amount))
+		requireBalance(t, contract, bob, amount)
+		requireAllowance(t, contract, owner, alice, unlimited)
+	})
+
+	t.Run("error - insufficient allowance", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		amount := big.NewInt(100)
+		owner, alice, bob := anvil.Account(0), anvil.Account(1), anvil.Account(2)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+		requireAllowance(t, contract, owner, alice, nil)
+
+		// when
+		_, err := transferFrom(t, anvil, contract, owner, alice, bob, amount)
+
+		// then
+		require.Error(t, err)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+		requireAllowance(t, contract, owner, alice, nil)
+	})
+
+	t.Run("error - insufficient funds", func(t *testing.T) {
+		// given
+		anvil, stop := integration.StartAnvil(t, true)
+		defer stop()
+
+		insufficient, amount := big.NewInt(100), big.NewInt(200)
+		owner, alice, bob := anvil.Account(0), anvil.Account(1), anvil.Account(2)
+		contract := deployContract(t, anvil, owner)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+
+		_, err := approve(t, anvil, contract, owner, alice, insufficient)
+		require.NoError(t, err)
+		requireAllowance(t, contract, owner, alice, insufficient)
+
+		// when
+		_, err = transferFrom(t, anvil, contract, owner, alice, bob, amount)
+
+		// then
+		require.Error(t, err)
+		requireBalance(t, contract, owner, totalSupply())
+		requireBalance(t, contract, bob, nil)
+		requireAllowance(t, contract, owner, alice, insufficient)
+	})
+}
 
 func TestBearCoin_TransferOwnership(t *testing.T) {
 	t.Run("happy path - deployer is owner", func(t *testing.T) {
