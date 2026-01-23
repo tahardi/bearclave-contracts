@@ -33,6 +33,127 @@ contract BearCoinTest is Test {
         assertEq(bcn.balanceOf(bob), 0);
     }
 
+    function test_approve() public {
+        // given
+        uint256 approveAmount = 500 * 10 ** bcn.decimals();
+        assertEq(bcn.allowance(owner, alice), 0);
+
+        vm.prank(owner);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Approval(owner, alice, approveAmount);
+
+        // when
+        bcn.approve(alice, approveAmount);
+
+        // then
+        assertEq(bcn.allowance(owner, alice), approveAmount);
+    }
+
+    function test_burn() public {
+        // given
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
+        uint256 initialBalance = bcn.balanceOf(owner);
+        uint256 initialSupply = bcn.totalSupply();
+
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit BearCoin.Burn(owner, burnAmount);
+
+        // when
+        bcn.burn(burnAmount);
+
+        // then
+        assertEq(bcn.balanceOf(owner), initialBalance - burnAmount);
+        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
+    }
+
+    function test_burn_non_owner() public {
+        // given
+        uint256 burnAmount = 50 * 10 ** bcn.decimals();
+        uint256 transferAmount = 100 * 10 ** bcn.decimals();
+        uint256 initialSupply = bcn.totalSupply();
+
+        vm.prank(owner);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Transfer(owner, alice, transferAmount);
+
+        require(bcn.transfer(alice, transferAmount), "Transfer failed");
+        assertEq(bcn.balanceOf(alice), transferAmount);
+
+        // when
+        vm.prank(alice);
+        vm.expectEmit(true, false, false, true);
+        emit BearCoin.Burn(alice, burnAmount);
+
+        bcn.burn(burnAmount);
+
+        // then
+        assertEq(bcn.balanceOf(alice), transferAmount - burnAmount);
+        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
+    }
+
+    function test_burn_revert_insufficient_balance() public {
+        // given
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
+        uint256 balance = bcn.balanceOf(alice);
+        assertEq(balance, 0);
+
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, alice, balance, burnAmount)
+        );
+
+        // when/then
+        bcn.burn(burnAmount);
+    }
+
+    function test_mint() public {
+        // given
+        uint256 burnAmount = 100 * 10 ** bcn.decimals();
+        uint256 initialBalance = bcn.balanceOf(owner);
+        uint256 initialSupply = bcn.totalSupply();
+
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit BearCoin.Burn(owner, burnAmount);
+
+        bcn.burn(burnAmount);
+
+        assertEq(bcn.balanceOf(owner), initialBalance - burnAmount);
+        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
+
+        // when
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit BearCoin.Mint(alice, burnAmount);
+
+        bcn.mint(alice, burnAmount);
+
+        // then
+        assertEq(bcn.balanceOf(alice), burnAmount);
+        assertEq(bcn.totalSupply(), initialSupply);
+    }
+
+    function test_mint_revert_not_owner() public {
+        // given
+        uint256 mintAmount = 100 * 10 ** bcn.decimals();
+        vm.expectRevert("Not owner");
+
+        // when/then
+        vm.prank(alice);
+        bcn.mint(alice, mintAmount);
+    }
+
+    function test_mint_revert_exceeds_total_supply() public {
+        // given
+        uint256 exceedAmount = bcn.TOTAL_SUPPLY() + 1;
+        vm.prank(owner);
+        vm.expectRevert("Minting exceeds total supply");
+
+        // when/then
+        bcn.mint(alice, exceedAmount);
+    }
+
     function test_transfer() public {
         // given
         uint256 transferAmount = 100 * 10 ** 18;
@@ -142,127 +263,6 @@ contract BearCoinTest is Test {
 
         // when/then
         require(!bcn.transferFrom(owner, bob, transferAmount), "Transfer succeded");
-    }
-
-    function test_approve() public {
-        // given
-        uint256 approveAmount = 500 * 10 ** bcn.decimals();
-        assertEq(bcn.allowance(owner, alice), 0);
-
-        vm.prank(owner);
-        vm.expectEmit(true, true, false, true);
-        emit IERC20.Approval(owner, alice, approveAmount);
-
-        // when
-        bcn.approve(alice, approveAmount);
-
-        // then
-        assertEq(bcn.allowance(owner, alice), approveAmount);
-    }
-
-    function test_mint() public {
-        // given
-        uint256 burnAmount = 100 * 10 ** bcn.decimals();
-        uint256 initialBalance = bcn.balanceOf(owner);
-        uint256 initialSupply = bcn.totalSupply();
-
-        vm.prank(owner);
-        vm.expectEmit(true, false, false, true);
-        emit BearCoin.Burn(owner, burnAmount);
-
-        bcn.burn(burnAmount);
-
-        assertEq(bcn.balanceOf(owner), initialBalance - burnAmount);
-        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
-
-        // when
-        vm.prank(owner);
-        vm.expectEmit(true, false, false, true);
-        emit BearCoin.Mint(alice, burnAmount);
-
-        bcn.mint(alice, burnAmount);
-
-        // then
-        assertEq(bcn.balanceOf(alice), burnAmount);
-        assertEq(bcn.totalSupply(), initialSupply);
-    }
-
-    function test_mint_revert_not_owner() public {
-        // given
-        uint256 mintAmount = 100 * 10 ** bcn.decimals();
-        vm.expectRevert("Not owner");
-
-        // when/then
-        vm.prank(alice);
-        bcn.mint(alice, mintAmount);
-    }
-
-    function test_mint_revert_exceeds_total_supply() public {
-        // given
-        uint256 exceedAmount = bcn.TOTAL_SUPPLY() + 1;
-        vm.prank(owner);
-        vm.expectRevert("Minting exceeds total supply");
-
-        // when/then
-        bcn.mint(alice, exceedAmount);
-    }
-
-    function test_burn() public {
-        // given
-        uint256 burnAmount = 100 * 10 ** bcn.decimals();
-        uint256 initialBalance = bcn.balanceOf(owner);
-        uint256 initialSupply = bcn.totalSupply();
-
-        vm.prank(owner);
-        vm.expectEmit(true, false, false, true);
-        emit BearCoin.Burn(owner, burnAmount);
-
-        // when
-        bcn.burn(burnAmount);
-
-        // then
-        assertEq(bcn.balanceOf(owner), initialBalance - burnAmount);
-        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
-    }
-
-    function test_burn_non_owner() public {
-        // given
-        uint256 burnAmount = 50 * 10 ** bcn.decimals();
-        uint256 transferAmount = 100 * 10 ** bcn.decimals();
-        uint256 initialSupply = bcn.totalSupply();
-
-        vm.prank(owner);
-        vm.expectEmit(true, true, false, true);
-        emit IERC20.Transfer(owner, alice, transferAmount);
-
-        require(bcn.transfer(alice, transferAmount), "Transfer failed");
-        assertEq(bcn.balanceOf(alice), transferAmount);
-
-        // when
-        vm.prank(alice);
-        vm.expectEmit(true, false, false, true);
-        emit BearCoin.Burn(alice, burnAmount);
-
-        bcn.burn(burnAmount);
-
-        // then
-        assertEq(bcn.balanceOf(alice), transferAmount - burnAmount);
-        assertEq(bcn.totalSupply(), initialSupply - burnAmount);
-    }
-
-    function test_burn_revert_insufficient_balance() public {
-        // given
-        uint256 burnAmount = 100 * 10 ** bcn.decimals();
-        uint256 balance = bcn.balanceOf(alice);
-        assertEq(balance, 0);
-
-        vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, alice, balance, burnAmount)
-        );
-
-        // when/then
-        bcn.burn(burnAmount);
     }
 
     function test_transferOwnership() public {
