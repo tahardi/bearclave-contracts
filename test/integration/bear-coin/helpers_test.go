@@ -9,51 +9,51 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tahardi/bearclave-contracts/contracts/bindings"
-	"github.com/tahardi/bearclave-contracts/test/foundry"
+	"github.com/tahardi/bearclave-foundry/foundry"
 	"github.com/tahardi/bearclave-contracts/test/integration"
 )
 
 func approve(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.BearCoin,
 	principal *foundry.Account,
 	proxy *foundry.Account,
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, principal)
+	opts := newTransactionOpts(t, f, principal)
 	call := func() (*types.Transaction, error) {
 		return contract.Approve(opts, proxy.Address(), amount)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func burn(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.BearCoin,
 	account *foundry.Account,
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, account)
+	opts := newTransactionOpts(t, f, account)
 	call := func() (*types.Transaction, error) {
 		return contract.Burn(opts, amount)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func deployContract(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	owner *foundry.Account,
 ) *bindings.BearCoin {
 	t.Helper()
-	contractAddress, err := anvil.DeployContract(t.Context(), ContractName, owner)
+	contractAddress, err := f.Forge().DeployContract(t.Context(), ContractName, owner)
 	require.NoError(t, err)
 
-	client, err := anvil.Client()
+	client, err := f.Anvil().Client(t.Context())
 	require.NoError(t, err)
 
 	contract, err := bindings.NewBearCoin(*contractAddress, client)
@@ -63,7 +63,7 @@ func deployContract(
 
 func executeCall(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contractCall func() (*types.Transaction, error),
 ) (*types.Receipt, error) {
 	t.Helper()
@@ -72,7 +72,7 @@ func executeCall(
 		return nil, err
 	}
 
-	client, err := anvil.Client()
+	client, err := f.Anvil().Client(t.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -81,27 +81,27 @@ func executeCall(
 
 func mint(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.BearCoin,
 	owner *foundry.Account,
 	to *foundry.Account,
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, owner)
+	opts := newTransactionOpts(t, f, owner)
 	call := func() (*types.Transaction, error) {
 		return contract.Mint(opts, to.Address(), amount)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func newTransactionOpts(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	from *foundry.Account,
 ) *bind.TransactOpts {
 	t.Helper()
-	opts, err := bind.NewKeyedTransactorWithChainID(from.PrivateKey(), anvil.ChainID())
+	opts, err := bind.NewKeyedTransactorWithChainID(from.PrivateKey(), f.Anvil().ChainID())
 	require.NoError(t, err)
 	return opts
 }
@@ -206,23 +206,23 @@ func totalSupply() *big.Int {
 
 func transfer(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.BearCoin,
 	from *foundry.Account,
 	to *foundry.Account,
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, from)
+	opts := newTransactionOpts(t, f, from)
 	call := func() (*types.Transaction, error) {
 		return contract.Transfer(opts, to.Address(), amount)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func transferFrom(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.BearCoin,
 	principal *foundry.Account,
 	proxy *foundry.Account,
@@ -230,9 +230,9 @@ func transferFrom(
 	amount *big.Int,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, proxy)
+	opts := newTransactionOpts(t, f, proxy)
 	call := func() (*types.Transaction, error) {
 		return contract.TransferFrom(opts, principal.Address(), to.Address(), amount)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }

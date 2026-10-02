@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tahardi/bearclave-contracts/contracts/bindings"
-	"github.com/tahardi/bearclave-contracts/test/foundry"
+	"github.com/tahardi/bearclave-foundry/foundry"
 	"github.com/tahardi/bearclave-contracts/test/integration"
 )
 
@@ -54,14 +54,14 @@ func imageIDFromHexString(t *testing.T, imageIDHex string) [32]byte {
 
 func deployContract(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	owner *foundry.Account,
 ) *bindings.FactorsVerifier {
 	t.Helper()
-	contractAddress, err := anvil.DeployContract(t.Context(), ContractName, owner)
+	contractAddress, err := f.Forge().DeployContract(t.Context(), ContractName, owner)
 	require.NoError(t, err)
 
-	client, err := anvil.Client()
+	client, err := f.Anvil().Client(t.Context())
 	require.NoError(t, err)
 
 	contract, err := bindings.NewFactorsVerifier(*contractAddress, client)
@@ -71,18 +71,18 @@ func deployContract(
 
 func newTransactionOpts(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	from *foundry.Account,
 ) *bind.TransactOpts {
 	t.Helper()
-	opts, err := bind.NewKeyedTransactorWithChainID(from.PrivateKey(), anvil.ChainID())
+	opts, err := bind.NewKeyedTransactorWithChainID(from.PrivateKey(), f.Anvil().ChainID())
 	require.NoError(t, err)
 	return opts
 }
 
 func executeCall(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contractCall func() (*types.Transaction, error),
 ) (*types.Receipt, error) {
 	t.Helper()
@@ -91,7 +91,7 @@ func executeCall(
 		return nil, err
 	}
 
-	client, err := anvil.Client()
+	client, err := f.Anvil().Client(t.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -100,33 +100,33 @@ func executeCall(
 
 func setImageID(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.FactorsVerifier,
 	account *foundry.Account,
 	imageID [32]byte,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, account)
+	opts := newTransactionOpts(t, f, account)
 	call := func() (*types.Transaction, error) {
 		return contract.SetImageId(opts, imageID)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func verify(
 	t *testing.T,
-	anvil *foundry.Anvil,
+	f *foundry.Foundry,
 	contract *bindings.FactorsVerifier,
 	account *foundry.Account,
 	product uint64,
 	seal []byte,
 ) (*types.Receipt, error) {
 	t.Helper()
-	opts := newTransactionOpts(t, anvil, account)
+	opts := newTransactionOpts(t, f, account)
 	call := func() (*types.Transaction, error) {
 		return contract.Verify(opts, product, seal)
 	}
-	return executeCall(t, anvil, call)
+	return executeCall(t, f, call)
 }
 
 func requireFactorsKnownForProductEvent(
@@ -167,11 +167,11 @@ func TestFactorsVerifier_SetImageID(t *testing.T) {
 	t.Run("happy path - expected testdata image ID", func(t *testing.T) {
 		// given
 		want := imageIDFromHexString(t, ImageID)
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner := anvil.Account(0)
-		contract := deployContract(t, anvil, owner)
+		owner := f.Anvil().Account(0)
+		contract := deployContract(t, f, owner)
 
 		// when
 		got, err := contract.ImageId(nil)
@@ -184,14 +184,14 @@ func TestFactorsVerifier_SetImageID(t *testing.T) {
 	t.Run("happy path - change image ID", func(t *testing.T) {
 		// given
 		want := imageIDFromHexString(t, "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner := anvil.Account(0)
-		contract := deployContract(t, anvil, owner)
+		owner := f.Anvil().Account(0)
+		contract := deployContract(t, f, owner)
 
 		// when
-		receipt, err := setImageID(t, anvil, contract, owner, want)
+		receipt, err := setImageID(t, f, contract, owner, want)
 
 		// then
 		require.NoError(t, err)
@@ -205,14 +205,14 @@ func TestFactorsVerifier_SetImageID(t *testing.T) {
 	t.Run("error - only owner can set image ID", func(t *testing.T) {
 		// given
 		want := imageIDFromHexString(t, "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner, other := anvil.Account(0), anvil.Account(1)
-		contract := deployContract(t, anvil, owner)
+		owner, other := f.Anvil().Account(0), f.Anvil().Account(1)
+		contract := deployContract(t, f, owner)
 
 		// when
-		_, err := setImageID(t, anvil, contract, other, want)
+		_, err := setImageID(t, f, contract, other, want)
 
 		// then
 		require.Error(t, err)
@@ -222,11 +222,11 @@ func TestFactorsVerifier_SetImageID(t *testing.T) {
 func TestFactorsVerifier_Verify(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		// given
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner := anvil.Account(0)
-		contract := deployContract(t, anvil, owner)
+		owner := f.Anvil().Account(0)
+		contract := deployContract(t, f, owner)
 
 		// Our Rust ZKVM program outputs the journal (i.e., our expected product)
 		// in Big Endian format. If you want the actual value, convert to LE.
@@ -234,7 +234,7 @@ func TestFactorsVerifier_Verify(t *testing.T) {
 		product := binary.BigEndian.Uint64(groth16Proof.Journal)
 
 		// when
-		receipt, err := verify(t, anvil, contract, owner, product, groth16Proof.Seal)
+		receipt, err := verify(t, f, contract, owner, product, groth16Proof.Seal)
 
 		// then
 		require.NoError(t, err)
@@ -243,17 +243,17 @@ func TestFactorsVerifier_Verify(t *testing.T) {
 
 	t.Run("error - incorrect product", func(t *testing.T) {
 		// given
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner := anvil.Account(0)
-		contract := deployContract(t, anvil, owner)
+		owner := f.Anvil().Account(0)
+		contract := deployContract(t, f, owner)
 
 		groth16Proof := groth16ProofFromTestData(t)
 		product := uint64(8)
 
 		// when
-		_, err := verify(t, anvil, contract, owner, product, groth16Proof.Seal)
+		_, err := verify(t, f, contract, owner, product, groth16Proof.Seal)
 
 		// then
 		require.Error(t, err)
@@ -261,11 +261,11 @@ func TestFactorsVerifier_Verify(t *testing.T) {
 
 	t.Run("error - invalid seal", func(t *testing.T) {
 		// given
-		anvil, stop := integration.StartAnvil(t, true)
+		f, stop := integration.StartFoundry(t, true)
 		defer stop()
 
-		owner := anvil.Account(0)
-		contract := deployContract(t, anvil, owner)
+		owner := f.Anvil().Account(0)
+		contract := deployContract(t, f, owner)
 
 		// Our Rust ZKVM program outputs the journal (i.e., our expected product)
 		// in Big Endian format. If you want the actual value, convert to LE.
@@ -274,7 +274,7 @@ func TestFactorsVerifier_Verify(t *testing.T) {
 		groth16Proof.Seal = []byte("invalid seal")
 
 		// when
-		_, err := verify(t, anvil, contract, owner, product, groth16Proof.Seal)
+		_, err := verify(t, f, contract, owner, product, groth16Proof.Seal)
 
 		// then
 		require.Error(t, err)
