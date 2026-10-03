@@ -126,9 +126,12 @@ func (r *Receipt) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("%w: parsing effective gas price: %w", ErrReceipt, err)
 	}
 
-	blobGasPrice, err := ParseUint64FromHexString(receipt.BlobGasPrice)
-	if err != nil {
-		return fmt.Errorf("%w: parsing blob gas price: %w", ErrReceipt, err)
+	var blobGasPrice uint64
+	if receipt.BlobGasPrice != "" {
+		blobGasPrice, err = ParseUint64FromHexString(receipt.BlobGasPrice)
+		if err != nil {
+			return fmt.Errorf("%w: parsing blob gas price: %w", ErrReceipt, err)
+		}
 	}
 
 	r.Status = status
