@@ -1,15 +1,17 @@
 # See more config options
 # https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [profile.default]
-auto_detect_remappings = true
+auto_detect_remappings = false
 broadcast = 'contracts/broadcast'
 cache_path = 'contracts/cache'
 libs = ['contracts/libs']
 out = 'contracts/out'
 remappings = [
     '@forge-std/=contracts/libs/forge-std/src/',
+    'forge-std/=contracts/libs/forge-std/src/',
     '@openzeppelin/=contracts/libs/openzeppelin-contracts/',
     'openzeppelin/=contracts/libs/openzeppelin-contracts/',
+    'openzeppelin-contracts/=contracts/libs/openzeppelin-contracts/',
     '@risc0-ethereum/=contracts/libs/risc0-ethereum/contracts/src/',
     'risc0-ethereum/=contracts/libs/risc0-ethereum/contracts/src/',
 ]

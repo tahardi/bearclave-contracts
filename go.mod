@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/ethereum/go-ethereum v1.17.7
 	github.com/stretchr/testify v1.12.1
-	github.com/tahardi/bearclave-foundry v0.1.0
+	github.com/tahardi/bearclave-foundry v0.2.0
 )
 
 require (
