@@ -27,20 +27,6 @@ jobs:
           version: v2.7.2
           args: --timeout=3m --config=./.golangci.yaml
 
-  go-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v5
-
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: './go.mod'
-
-      - name: Run Go Unit Tests
-        run: make go-test
-
   sol-lint:
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +37,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
 
       - name: Show Forge Version
         run: forge --version
@@ -68,6 +56,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
 
       - name: Show Forge version
         run: forge --version
@@ -87,6 +77,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
 
       - name: Install Go
         uses: actions/setup-go@v5

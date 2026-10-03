@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tahardi/bearclave-contracts/test/foundry"
+	"github.com/tahardi/bearclave-foundry/foundry"
 )
 
 const (
@@ -24,17 +24,12 @@ func AssertAddressesEqual(
 	assert.Equal(t, 0, address1.Cmp(address2))
 }
 
-func StartAnvil(
+func StartFoundry(
 	t *testing.T,
 	silent bool,
-) (*foundry.Anvil, func()) {
+) (*foundry.Foundry, func()) {
 	t.Helper()
-	anvil, err := foundry.NewAnvil(BroadcastDir, ScriptDir)
+	f, err := foundry.NewFoundry(t.Context(), silent, BroadcastDir, ScriptDir)
 	require.NoError(t, err)
-
-	err = anvil.Start(t.Context(), silent)
-	require.NoError(t, err)
-
-	stop := func() { _ = anvil.Stop() }
-	return anvil, stop
+	return f, f.Stop
 }

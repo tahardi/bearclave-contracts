@@ -16,14 +16,14 @@ const (
 
 func TestHelloWorld(t *testing.T) {
 	// given
-	anvil, stop := integration.StartAnvil(t, true)
+	f, stop := integration.StartFoundry(t, true)
 	defer stop()
 
-	owner := anvil.Account(0)
-	contractAddress, err := anvil.DeployContract(t.Context(), ContractName, owner)
+	owner := f.Anvil().Account(0)
+	contractAddress, err := f.Forge().DeployContract(t.Context(), ContractName, owner)
 	require.NoError(t, err)
 
-	client, err := ethclient.Dial(anvil.URL())
+	client, err := ethclient.Dial(f.Anvil().URL())
 	require.NoError(t, err)
 
 	want := "Hello, World!"

@@ -11,7 +11,6 @@ pre-pr: \
 	tidy \
 	mock \
 	go-lint \
-	go-test \
 	sol-fmt \
 	sol-lint \
 	sol-sec \
@@ -43,13 +42,6 @@ mock-version:
 .PHONY: tidy
 tidy:
 	@go mod tidy
-
-.PHONY: go-test
-go-test: go-test-foundry
-
-.PHONY: go-test-foundry
-go-test-foundry:
-	@go test -v -count=1 -race ./test/foundry/...
 
 ################################################################################
 # Solidity Targets
