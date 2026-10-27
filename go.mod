@@ -3,7 +3,7 @@ module github.com/tahardi/bearclave-contracts
 go 1.25.5
 
 require (
-	github.com/ethereum/go-ethereum v1.17.7
+	github.com/ethereum/go-ethereum v1.17.10
 	github.com/stretchr/testify v1.12.1
 	github.com/tahardi/bearclave-foundry v0.2.0
 )
